@@ -25,11 +25,18 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
   - Node `20` via `actions/setup-node@v4`.
   - Python `3.11` via `actions/setup-python@v5`.
   - Go `1.22` via `actions/setup-go@v5`.
-  - Rust stable via `dtolnay/rust-toolchain@stable`.
-- Jobs executed:
-  - `make test` — runs tests in Rust, Python, Go, JS.
-  - `make build` — builds Rust and Go; JS build is a placeholder.
-  - `make lint` — basic checks (`cargo check`, Python `compileall`, `go vet`, trivial JS check).
+  - Rust stable via `dtolnay/rust-toolchain@stable` (with `rustfmt`, `clippy`).
+ - Jobs:
+  - `verify-toolchain` — runs `tools/verify-toolchain.sh` to compare pinned versions against runner.
+  - `test-rust`, `test-go`, `test-python`, `test-js` — per-language unit tests with caching.
+  - `build-all` — builds Rust/Go and JS placeholder after tests succeed.
+  - `lint-all` — runs `make ci-lint` (rustfmt/clippy, go fmt).
+  - `integration-smoke` — daemon boot smoke and OpenAPI presence check.
+ - Caching:
+  - Cargo registry/git and `daemon/target`.
+  - Go modules (`~/go/pkg/mod`).
+  - Pip cache (`~/.cache/pip`).
+  - npm cache (`~/.npm`).
 
 ## Development Environment
 - Script: `scripts/install-dev-tools-macos.sh` installs Rust, Go, Node, PNPM, Yarn, Python 3.11, and Docker Desktop; ensures Xcode CLTs.
@@ -38,25 +45,33 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
   - `make test` — runs unit tests across languages.
   - `make lint` — quick static checks.
   - `make build` — compiles Rust/Go and placeholder JS build.
+  - `make ci-lint` — formatting and static analysis (rustfmt, clippy, go fmt).
 - Package management:
   - Node: npm workspaces (`app`, `connectors/browser-extension`, `connectors/vscode`).
   - Rust: Cargo workspace planned; currently single crate in `daemon`.
   - Go: module in `agent-scripts`.
   - Python: requirements placeholder in `intelligence/requirements.txt`.
+ - Toolchain pinning:
+   - `.node-version`, `.python-version`, `rust-toolchain.toml`.
+   - Verification script: `tools/verify-toolchain.sh`.
 
 ## Networking & Services (Current)
 - No running network services yet.
 - Planned: local HTTP/JSONRPC served by `daemon` on `127.0.0.1`, with connectors posting events and app fetching timeline/search.
+ - API contract: OpenAPI spec at `infra/api/openapi.yaml` is the authoritative source.
+ - Port (draft): `127.0.0.1:8765` for local HTTP; Unix socket alternative planned.
 
 ## Storage & Index (Planned)
 - Timeline metadata: SQLite.
 - Content blobs: filesystem or SQLite BLOBs.
 - Vector search: `hnswlib` or FAISS (quantized) embedded locally.
 - Retention/compaction: periodic tasks within `daemon`.
+ - See `docs/storage/indexing.md` for persistence, snapshots, and export format.
 
 ## Security (Current/Planned)
 - Current: repo-level only; no secrets in CI.
 - Planned: per-device encryption-at-rest, opt-out for sensitive apps, redaction heuristics, explicit purge controls.
+ - See `docs/security/local-rpc-hardening.md` for local RPC hardening checklist.
 
 ## Packaging & Deployment (Current)
 - No installers yet.
@@ -80,3 +95,4 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
 
 ## Status
 - This is a living document. Update as services, endpoints, and packaging evolve.
+- Recent updates: CI split into per-language jobs with caching; toolchain pinning and verification added; OpenAPI spec authored at `infra/api/openapi.yaml`; security and storage docs linked.
