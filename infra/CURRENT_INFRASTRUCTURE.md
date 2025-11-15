@@ -95,4 +95,4 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
 
 ## Status
 - This is a living document. Update as services, endpoints, and packaging evolve.
-- Recent updates: CI split into per-language jobs with caching; toolchain pinning and verification added; OpenAPI spec authored at `infra/api/openapi.yaml`; security and storage docs linked.
+ - Recent updates: CI split into per-language jobs with caching; toolchain pinning and verification added (now fails on mismatch); OpenAPI spec authored at `infra/api/openapi.yaml`; security and storage docs linked; Python test discovery fixed to `test_*.py`; Node packages set `type: "module"`; CI caches now fallback when lockfiles are missing (Cargo.toml/go.mod).
