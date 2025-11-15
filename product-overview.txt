@@ -1,0 +1,181 @@
+1) Quick summary of what Pieces is (as a product)
+* An on-device “long-term memory” agent that automatically captures what users do across apps (browser, IDEs, chats, docs), stores contextual snippets/links/timeline, and surfaces them via search, timeline views, and an LLM Copilot. Pieces+1
+
+* Emphasis: privacy / on-device processing (cloud optional), plugin ecosystem (VS Code, browser), and integration with local or cloud LLMs. Pieces for Developers+1
+
+________________
+
+
+2) High-level system architecture (components & responsibilities)
+   1. OS-level Agent (core daemon / Pieces OS runner)
+
+      * Runs on user machine; captures activity events (active window, URLs, clipboard, selected text, file open events, audio transcripts if enabled).
+
+      * Responsibilities: event ingestion, pre-processing, short-term buffering, privacy controls (app exclude, time ranges), local queueing to the storage/index.
+
+      * Why: gives the “invisible second brain” capture across apps described by Pieces. Pieces
+
+         2. Connectors / Plugins
+
+            * Browser extension (content scripts + background): capture page metadata, highlights, selections, tab events.
+
+            * IDE plugin (e.g., VS Code extension): capture selections, open files, git diffs, and offer Copilot integration. Pieces for Developers+1
+
+               3. Ingestion & Normalization Pipeline
+
+                  * Parsers for HTML, Markdown, code, transcripts, Slack/Teams messages, PDFs.
+
+                  * Chunking + metadata tagging (timestamp, app, URL, process, user tags).
+
+                  * Deduplication / change detection (hashing / diffing).
+
+                     4. Local Storage & Vector Index
+
+                        * Short-term DB (time-series / metadata): SQLite (or RocksDB) for timeline queries.
+
+                        * Content storage: filesystem blobs or SQLite BLOBs.
+
+                        * Vector index for retrieval: on-device FAISS / HNSW (hnswlib) / Chroma local mode / Milvus embedded alternatives. Use quantized vectors for space.
+
+                        * Periodic compaction / TTL / retention policy UI.
+
+                        * Why local: privacy and performance goals. Pieces for Developers
+
+                           5. Embeddings & Models Layer
+
+                              * Embedding generation: support both local (ggml / llama.cpp / local PyTorch quantized models) and cloud providers (OpenAI, Anthropic, etc.) via user opt-in keys.
+
+                              * LLM runtime: allow local LLMs (via llama.cpp, GGML, Ollama, or Mistral/Meta models if feasible) AND cloud LLMs; plumbing to supply RAG context from the vector index. Pieces
+
+                                 6. Retrieval & Memory Engine (LTM-2)
+
+                                    * Time-aware retrieval: combine recency + semantic relevance + provenance (which app) weighting.
+
+                                    * Memory summarization & enrichment (auto-title, tags, extract URLs).
+
+                                    * API for Copilot sessions (context builder / prompt assembly). Pieces
+
+                                       7. Frontend / UX
+
+                                          * Desktop app (native or web wrapper) with timeline, search, memory detail, privacy controls, export, and Copilot chat.
+
+                                          * In-app overlays / context menus via plugins (right-click actions in VS Code, browser toolbar, global hotkey capture).
+
+                                             8. Security & Privacy
+
+                                                * Encryption at rest (per-device key or OS keychain).
+
+                                                * Air-gapped mode: local only, with explicit opt-in for any cloud sync or optimizer.
+
+                                                * Granular controls: per-app capture off, delete time ranges, sensitive content redaction. Pieces for Developers
+
+________________
+
+
+3) Concrete technology choices (recommended stack for R&D / MVP)
+                                                   * Desktop runtime: Tauri (Rust backend + webview frontend) or Electron for faster iteration. Tauri better for small footprint / security; Electron faster to prototype.
+
+                                                   * Agent/daemon: Rust (for cross-platform binary) or Go — access OS APIs (macOS Accessibility/AX, Windows UI Automation, Linux X11/Wayland) for window and app metadata.
+
+                                                   * Plugins:
+
+                                                      * Browser extension: standard WebExtensions (Chrome/Edge/Firefox) content scripts and background service workers.
+
+                                                      * VS Code extension: TypeScript using VS Code Extension API. Pieces for Developers
+
+                                                         * DB & index: SQLite for metadata + LMDB/RocksDB for blobs; hnswlib or FAISS (with quantization) for vector search (packaged for local use). Consider Chroma local/embedded for developer speed.
+
+                                                         * Embeddings & LLMs: provide adapters for: OpenAI/Anthropic (cloud), local embeddings & LLMs via llama.cpp / ggml, and containerized local runtimes (e.g., using GGML quantized models or ONNX). Use an adapter layer so the app can switch engines. Pieces
+
+                                                         * Language stack: Frontend React + Tailwind (fits your stated preference). Backend/daemon in Rust + node bridge for local IPC (e.g., JSONRPC over unix socket).
+
+                                                         * Packaging & install: Native installers for macOS (.pkg/.dmg), Windows (.msi), Linux (.deb/.AppImage). Pieces offers downloads for all OSes. Pieces
+
+________________
+
+
+4) Data pipeline (detailed flow)
+                                                            1. Event capture (agent / extension / plugin) → event queue.
+
+                                                            2. Preprocess: normalize text, metadata, language detection, remove stop content per policy.
+
+                                                            3. Chunk & embed: split long docs by semantic chunks, compute embeddings (local/cloud), save chunk + metadata to storage and add vectors to index.
+
+                                                            4. Enrichment: auto-summaries, canonical titles, tags (NLP), URL extraction.
+
+                                                            5. Indexing: insert into vector index and metadata DB.
+
+                                                            6. Retrieval: when user searches or uses Copilot, assemble RAG context (time window, app filters, vector search) → build prompt → LLM produces output.
+
+                                                            7. Privacy ops: on user commands, expunge by time/app or re-encrypt.
+
+________________
+
+
+5) MVP roadmap (30/60/90 day plan)
+MVP (30d)
+                                                               * Build OS agent that logs window titles, active URLs, timestamps and stores metadata locally.
+
+                                                               * Simple browser extension to capture page title + selection and send to local agent.
+
+                                                               * Local SQLite timeline UI and search by keyword.
+
+                                                               * Basic VS Code extension that saves selected code snippets via local API.
+
+MVP+ (60d)
+                                                                  * Add vector embeddings & local vector search (hnswlib) for semantic search.
+
+                                                                  * Hook into a simple cloud LLM or local small LLM for “search → answer” flow (single-turn RAG).
+
+                                                                  * Basic privacy controls (toggle capture per app, delete last hour).
+
+Polish (90d)
+                                                                     * Enrichment (auto titles, auto-tags), timeline UI, Copilot chat providing contextual responses.
+
+                                                                     * On-device LLM option (llama.cpp) and plugin ecosystem documentation.
+
+                                                                     * Packaging / installers for macOS/Windows/Linux.
+
+________________
+
+
+6) Experiments & R&D questions to validate early
+                                                                        * Capture scope vs CPU/memory: measure overhead of continuous LTM on machines with many tabs / large projects (there are community reports of slowdowns to watch). GitHub
+
+                                                                        * Indexing strategy tradeoffs: chunk size, embedding model, and vector index type — experiment for precision/latency and storage cost.
+
+                                                                        * Privacy UX: test controls users actually use (per-app toggle vs per-time purge). Pieces emphasizes these controls. Pieces
+
+                                                                        * Prompt engineering for time-aware retrieval: test weighting schemes combining recency, mention frequency, and semantic similarity (time-boosted RAG). Pieces
+
+________________
+
+
+7) Performance & scaling considerations
+                                                                           * Use incremental embeddings and background batching to avoid spikes.
+
+                                                                           * Quantize embeddings/LLM weights for storage savings.
+
+                                                                           * Provide heuristics to limit old memories (TTL, sampling) and let power users export archives.
+
+                                                                           * Provide graceful degradation: when on low resource devices, fall back to metadata-only indexing (no embeddings).
+
+________________
+
+
+8) Legal, security & ethical checklist
+                                                                              * Explicit consent during install, clear defaults: capture OFF for sensitive apps (password managers, banking).
+
+                                                                              * E2E encryption at rest, clear export/import controls, enterprise admin controls. Pieces for Developers
+
+                                                                              * Disclosure if cloud LLMs are used: which provider, what data is sent, and user opt-in.
+
+________________
+
+
+9) Risks & mitigations
+                                                                                 * Resource usage → throttling, backoff, selective capture, lightweight indexing.
+
+                                                                                 * Privacy leaks → strict default opt-out lists, redaction heuristics, explicit deletion UI.
+
+                                                                                 * Model drift / hallucinations → surface provenance and allow “show me source” from memory fragments.

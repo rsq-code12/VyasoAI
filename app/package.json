@@ -1,0 +1,10 @@
+{
+  "name": "@vyasoai/app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "echo \"No build step yet\"",
+    "test": "node --test tests/basic.test.js",
+    "lint": "echo \"TODO: add eslint\""
+  }
+}

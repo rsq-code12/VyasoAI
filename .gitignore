@@ -1,0 +1,32 @@
+# General
+.DS_Store
+
+# Node
+node_modules/
+dist/
+build/
+.out/
+.pnp/
+.pnpm-store/
+
+# Rust
+target/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Go
+bin/
+*.exe
+*.test
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/

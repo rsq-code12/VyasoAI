@@ -1,0 +1,15 @@
+{
+  "name": "vyasoai-monorepo",
+  "private": true,
+  "workspaces": [
+    "app",
+    "connectors/browser-extension",
+    "connectors/vscode"
+  ],
+  "scripts": {
+    "dev": "echo \"Use 'make dev'\"",
+    "test": "echo \"Use 'make test'\"",
+    "lint": "echo \"Use 'make lint'\"",
+    "build": "echo \"Use 'make build'\""
+  }
+}

@@ -1,0 +1,7 @@
+# Placeholder compose file — future services:
+# - daemon
+# - vector index
+# - local LLM runtime
+
+version: "3.8"
+services: {}
