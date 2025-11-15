@@ -85,7 +85,7 @@ jobs:
       - name: Install deps
         run: pip install -r intelligence/requirements.txt || true
       - name: Test
-        run: python3 -m unittest discover -s intelligence/tests -p 'test_*\.py'
+        run: python3 -m unittest discover -s intelligence/tests -p 'test_*.py'
 
   test-js:
     runs-on: ubuntu-latest

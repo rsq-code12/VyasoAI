@@ -7,7 +7,7 @@ dev:
 
 test:
 	cargo test --manifest-path daemon/Cargo.toml --quiet
-	python3 -m unittest discover -s intelligence/tests -p 'test_*\.py'
+	python3 -m unittest discover -s intelligence/tests -p 'test_*.py'
 	( cd agent-scripts/cmd/collector && go test ./... )
 	node --test app/tests/basic.test.js connectors/browser-extension/tests/basic.test.js connectors/vscode/tests/basic.test.js
 
