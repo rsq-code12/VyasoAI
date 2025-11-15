@@ -17,7 +17,8 @@ Vyaso AI is a Pieces Replica: an on-device long-term memory agent that captures 
 - `app/` — desktop UI scaffold (timeline, search, chat) — TBD (Tauri/Electron).
 - `infra/` — deployment bits (Docker, env, future packaging).
 - `.github/workflows/ci.yml` — CI for unit tests, lint, and build.
- - `infra/CURRENT_INFRASTRUCTURE.md` — text description of the current infrastructure.
+- `infra/CURRENT_INFRASTRUCTURE.md` — text description of the current infrastructure.
+ - `infra/api/openapi.yaml` — minimal OpenAPI spec for the local daemon APIs.
 
 ## Getting Started
 - macOS dev prerequisites: run `scripts/install-dev-tools-macos.sh`.

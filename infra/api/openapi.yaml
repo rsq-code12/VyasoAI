@@ -1,0 +1,189 @@
+openapi: 3.0.3
+info:
+  title: Vyaso AI Local Daemon API
+  version: 0.1.0
+  description: |
+    Minimal local API contract for connectors, app, and agents.
+    Transport over loopback HTTP (127.0.0.1) or Unix domain socket.
+servers:
+  - url: http://127.0.0.1:8765
+paths:
+  /api/v1/register-device:
+    post:
+      summary: Device handshake for local agents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterDeviceRequest'
+      responses:
+        '200':
+          description: Registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDeviceResponse'
+  /api/v1/events:
+    post:
+      summary: Ingest capture events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Event'
+      responses:
+        '202':
+          description: Accepted
+  /api/v1/timeline:
+    get:
+      summary: Query timeline
+      parameters:
+        - in: query
+          name: start
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: end
+          schema:
+            type: string
+            format: date-time
+        - in: query
+          name: app
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Timeline entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimelineEntry'
+  /api/v1/memories/search:
+    post:
+      summary: Time-aware vector search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+  /api/v1/privacy/purge:
+    post:
+      summary: Purge by app/time range
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurgeRequest'
+      responses:
+        '200':
+          description: Purge complete
+components:
+  schemas:
+    RegisterDeviceRequest:
+      type: object
+      properties:
+        device_id:
+          type: string
+        device_name:
+          type: string
+      required: [device_id]
+    RegisterDeviceResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+        token:
+          type: string
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        ts:
+          type: string
+          format: date-time
+        app:
+          type: string
+        type:
+          type: string
+        blobs:
+          type: array
+          items:
+            type: string
+        meta:
+          type: object
+      required: [ts, app, type]
+    TimelineEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        ts:
+          type: string
+          format: date-time
+        app:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    SearchRequest:
+      type: object
+      properties:
+        query:
+          type: string
+        query_embedding:
+          type: array
+          items:
+            type: number
+        top_k:
+          type: integer
+          default: 5
+        filters:
+          type: object
+      oneOf:
+        - required: [query]
+        - required: [query_embedding]
+    SearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              score:
+                type: number
+              snippet:
+                type: string
+    PurgeRequest:
+      type: object
+      properties:
+        app:
+          type: string
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time

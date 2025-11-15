@@ -20,7 +20,7 @@
 - `POST /api/v1/embeddings/batch` — generate embeddings for chunks.
 - `POST /api/v1/privacy/purge` — delete by app/time range.
 
-Transport: local HTTP on `127.0.0.1` or Unix socket JSONRPC. Air-gapped defaults.
+Transport: local HTTP on `127.0.0.1` or Unix socket JSONRPC. Air-gapped defaults. See `infra/api/openapi.yaml` for the authoritative API spec.
 
 ## Security Rules
 - Encryption at rest using per-device keychain; explicit cloud opt-in.

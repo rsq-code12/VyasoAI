@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: dev test lint build
+.PHONY: dev test lint build ci-lint
 
 dev:
 	@echo "Dev bootstrap: see scripts/install-dev-tools-macos.sh"
@@ -16,6 +16,13 @@ lint:
 	python3 -m compileall -q intelligence
 	( cd agent-scripts/cmd/collector && go vet ./... || true )
 	node -e "console.log('lint ok')"
+
+ci-lint:
+	cargo fmt --manifest-path daemon/Cargo.toml -- --check || true
+	cargo clippy --manifest-path daemon/Cargo.toml -- -D warnings || true
+	( cd agent-scripts/cmd/collector && go fmt ./... )
+	node -e "console.log('format ok')"
+
 
 build:
 	cargo build --manifest-path daemon/Cargo.toml --quiet
