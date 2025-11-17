@@ -1,5 +1,7 @@
 import { putEvent, getAll, deleteEvent, updateEvent, BufferedEvent } from './db'
 
+let DAEMON_BASE = 'http://127.0.0.1:8765'
+
 async function sha256Hex(text: string): Promise<string> {
   const enc = new TextEncoder().encode(text)
   const digest = await crypto.subtle.digest('SHA-256', enc)
@@ -13,7 +15,7 @@ function nowRfc3339(): string {
 
 async function postEnvelope(body: any): Promise<boolean> {
   try {
-    const resp = await fetch('http://127.0.0.1:8765/v1/events', {
+    const resp = await fetch(`${DAEMON_BASE}/v1/events`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Vyaso-Local-Client': 'browser-extension' },
       body: JSON.stringify(body)
@@ -26,7 +28,7 @@ async function postEnvelope(body: any): Promise<boolean> {
 
 async function healthOk(): Promise<boolean> {
   try {
-    const resp = await fetch('http://127.0.0.1:8765/v1/health', {
+    const resp = await fetch(`${DAEMON_BASE}/v1/health`, {
       method: 'GET',
       headers: { 'X-Vyaso-Local-Client': 'browser-extension' }
     })
@@ -100,6 +102,29 @@ chrome.runtime.onInstalled.addListener(() => {})
 chrome.runtime.onMessage.addListener((msg: any) => {
   if (msg && msg.type === 'vyaso-selection') {
     handleSelection(msg.text, msg.meta)
+  }
+})
+
+chrome.runtime.onMessage.addListener((msg: any, _sender: any, sendResponse: (resp: any) => void) => {
+  if (msg && msg.type === 'vyaso-dump-buffer') {
+    getAll().then(items => sendResponse(items)).catch(() => sendResponse([]))
+    return true
+  }
+  if (msg && msg.type === 'vyaso-force-drain') {
+    retryBuffer().then(() => sendResponse({ ok: true })).catch(() => sendResponse({ ok: false }))
+    return true
+  }
+  if (msg && msg.type === 'vyaso-test-selection') {
+    const p = msg.payload || {}
+    handleSelection(p.text || '', p.meta || {})
+    sendResponse({ ok: true })
+    return true
+  }
+  if (msg && msg.type === 'vyaso-set-daemon') {
+    const base = msg.payload?.base
+    if (typeof base === 'string' && base.startsWith('http')) DAEMON_BASE = base
+    sendResponse({ ok: true, base: DAEMON_BASE })
+    return true
   }
 })
 

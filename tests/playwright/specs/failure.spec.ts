@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { loadExtension } from '../helpers/ext'
+import { loadExtension, callExtension } from '../helpers/ext'
 import { startDaemon } from '../helpers/daemon'
 
 test('Failure Simulation & Recovery (no duplicates)', async () => {
@@ -7,12 +7,7 @@ test('Failure Simulation & Recovery (no duplicates)', async () => {
   const { context, page } = await loadExtension('connectors/browser-extension')
   await page.goto('https://example.com')
   await page.evaluate(() => {
-    const sel = window.getSelection()
-    const range = document.createRange()
-    const p = document.querySelector('h1') as HTMLElement
-    range.selectNodeContents(p)
-    sel?.removeAllRanges(); sel?.addRange(range)
-    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))
+    window.postMessage({ type: 'vyaso-test-selection', text: 'FailureCase', meta: { url: 'https://example.com', title: 'Example Domain', origin: 'https://example.com', canonical: null, hostname: 'example.com' } }, '*')
   })
   await page.waitForTimeout(4000)
   const keys = new Set(daemon.received.map(r => r.body.event_id || r.body.content_hash))
