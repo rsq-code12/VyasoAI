@@ -25,6 +25,15 @@ Vyaso AI is a Pieces Replica: an on-device long-term memory agent that captures 
 - Common scripts: `make dev`, `make test`, `make lint`, `make build`.
 - CI: pushes and PRs to `main` run tests/lint/build across languages.
 
+## Test Suites
+- Playwright (browser extension):
+  - Headless: `npm run test:playwright`
+  - Headful: `npm run test:playwright:headful`
+- VS Code extension:
+  - Unit: `npm run test:unit:vscode`
+  - Integration (local-only): `npm run test:integration:vscode`
+    - Launches VS Code with the extension and a mock daemon; requires local environment.
+
 ## Agent Chats (placeholders)
 - Chat 1: `docs/chats/agent1.md`
 - Chat 2: `docs/chats/agent2.md`
@@ -35,3 +44,4 @@ Vyaso AI is a Pieces Replica: an on-device long-term memory agent that captures 
 ## Notes
 - This is a skeleton for rapid iteration; components are minimal but wired for CI.
 - See `PROJECT_BIBLE.md` for stack choices, APIs, security rules, and governance.
+- Test artifacts like `test-results/` and `.vscode-test/` are ignored.

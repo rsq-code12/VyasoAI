@@ -10,6 +10,10 @@
     "dev": "echo \"Use 'make dev'\"",
     "test": "echo \"Use 'make test'\"",
     "lint": "echo \"Use 'make lint'\"",
-    "build": "echo \"Use 'make build'\""
+    "build": "echo \"Use 'make build'\"",
+    "test:playwright": "npm --prefix connectors/browser-extension run build && playwright test -c tests/playwright/playwright.config.ts",
+    "test:playwright:headful": "npm --prefix connectors/browser-extension run build && playwright test -c tests/playwright/playwright.config.ts --project=headful",
+    "test:integration:vscode": "node tests/vscode/run.cjs",
+    "test:unit:vscode": "npm --prefix connectors/vscode run test"
   }
 }
