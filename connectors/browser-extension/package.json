@@ -4,8 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "echo \"No build step yet\"",
-    "test": "node --test tests/basic.test.js",
-    "lint": "echo \"TODO: add eslint\""
+    "build": "tsc",
+    "test": "ts-node tests/buffering.test.ts",
+    "lint": "echo \"TODO: add eslint\"",
+    "e2e": "playwright test --config e2e/playwright.config.ts"
+  }
+  ,
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "ts-node": "^10.9.2",
+    "fake-indexeddb": "^4.0.2",
+    "@playwright/test": "^1.48.2"
   }
 }

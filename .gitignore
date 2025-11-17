@@ -30,3 +30,13 @@ bin/
 # IDE
 .vscode/
 .idea/
+
+# Test artifacts
+test-results/
+connectors/vscode/tmp-vscode-buffer-test/
+
+# Trae workspace metadata
+.trae/
+
+# Daemon runtime data
+daemon/data/
