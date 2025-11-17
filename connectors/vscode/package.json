@@ -4,14 +4,37 @@
   "version": "0.1.0",
   "publisher": "vyasoai",
   "type": "module",
-  "engines": { "vscode": "^1.80.0" },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
-  "main": "src/extension.js",
-  "contributes": {},
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:vyaso.sendSelection"
+  ],
+  "main": "dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "vyaso.sendSelection",
+        "title": "Send Selection to Memory"
+      }
+    ]
+  },
   "scripts": {
-    "build": "echo \"No build step yet\"",
-    "test": "node --test tests/basic.test.js",
-    "lint": "echo \"TODO: add eslint\""
+    "build": "tsc",
+    "test": "ts-node tests/buffering.test.ts",
+    "lint": "echo \"TODO: add eslint\"",
+    "vscode:test": "node ./integration/run-integration.cjs"
+  },
+  "devDependencies": {
+    "@types/diff": "^7.0.2",
+    "@types/vscode": "^1.80.0",
+    "@vscode/test-electron": "^2.3.4",
+    "diff": "^5.2.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
   }
 }

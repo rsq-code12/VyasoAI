@@ -34,6 +34,7 @@ bin/
 # Test artifacts
 test-results/
 connectors/vscode/tmp-vscode-buffer-test/
+.vscode-test/
 
 # Trae workspace metadata
 .trae/
