@@ -29,8 +29,8 @@ export async function callExtension<T>(context: BrowserContext, type: string, pa
     if (Date.now() - started > 10000) throw new Error('extension worker not found')
   }
   return await worker.evaluate(({ type, payload }) => {
-    return new Promise((resolve) => {
-      chrome.runtime.sendMessage({ type, payload }, (resp) => { resolve(resp as any) })
+    return new Promise<T>((resolve) => {
+      (globalThis as any).chrome.runtime.sendMessage({ type, payload }, (resp: T) => { resolve(resp) })
     })
   }, { type, payload })
 }

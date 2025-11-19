@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": "",
+    "devPath": "../app",
+    "distDir": "../app/dist"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "title": "VyasoAI",
+        "fullscreen": false,
+        "resizable": true,
+        "width": 1200,
+        "height": 800
+      }
+    ],
+    "systemTray": {
+      "iconPath": "icons/tray.icns"
+    },
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    }
+  }
+}

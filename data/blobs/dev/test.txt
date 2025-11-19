@@ -1,0 +1,3 @@
+Hello from VyasoAI.
+This is a simple test blob used to verify the Python CLI integration.
+It contains multiple sentences and lines to trigger chunking.

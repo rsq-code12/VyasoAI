@@ -1,0 +1,82 @@
+openapi: 3.0.3
+info:
+  title: Vyaso AI Local Daemon API
+  version: 0.1.0
+  description: |
+    Minimal local API: health and event ingestion.
+    Transport over Unix domain socket (macOS/Linux) or loopback HTTP (Windows).
+servers:
+  - url: http://127.0.0.1:8765
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              example:
+                status: ok
+  /v1/events:
+    post:
+      summary: Ingest an event envelope (metadata only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventEnvelope'
+            example:
+              event_id: "550e8400-e29b-41d4-a716-446655440000"
+              timestamp: "2025-01-01T12:34:56Z"
+              source: "browser-extension"
+              app: "chrome"
+              content_pointer: "/var/vyasoai/blobs/abc123"
+              content_hash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+              size_bytes: 12345
+              tags: ["work", "doc"]
+              privacy_flag: "default"
+      responses:
+        '202':
+          description: Accepted and queued for async processing
+components:
+  schemas:
+    EventEnvelope:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        source:
+          type: string
+        app:
+          type: string
+        content_pointer:
+          type: string
+        content_hash:
+          type: string
+          description: sha256 hex string (64 chars)
+        size_bytes:
+          type: integer
+          format: int64
+        tags:
+          type: array
+          items:
+            type: string
+        privacy_flag:
+          type: string
+          enum: [default, sensitive, never_store]
+      required:
+        - event_id
+        - timestamp
+        - source
+        - app
+        - content_pointer
+        - content_hash
+        - size_bytes
+        - tags
+        - privacy_flag

@@ -1,1 +1,1 @@
-console.log('Vyaso AI app bootstrap');
+export {}

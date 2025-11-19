@@ -1,0 +1,9 @@
+{
+  "job_id": "JTEST",
+  "event_id": "00000000-0000-4000-8000-000000000001",
+  "blob_path": "data/blobs/dev/test.txt",
+  "content_type": "prose",
+  "source": {"connector": "dev"},
+  "params": {"backend": "mock"},
+  "created_at": "2025-11-18T00:00:00Z"
+}

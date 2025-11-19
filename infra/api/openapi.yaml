@@ -1,189 +1,391 @@
 openapi: 3.0.3
 info:
   title: Vyaso AI Local Daemon API
-  version: 0.1.0
+  version: 1.0.0
   description: |
-    Minimal local API contract for connectors, app, and agents.
-    Transport over loopback HTTP (127.0.0.1) or Unix domain socket.
+    Local-first, fully offline API for trusted local applications.
+    This daemon runs on the user's device and communicates over a private
+    local link (Unix Domain Socket on macOS/Linux or loopback TCP on Windows).
+    No cloud tokens; trust is signaled via a local client header.
+
 servers:
   - url: http://127.0.0.1:8765
+    description: Local-only loopback HTTP (or UDS via local IPC bridge)
+
+tags:
+  - name: Events
+    description: Event envelope ingestion and validation
+  - name: Memory
+    description: Retrieve stored memory metadata
+  - name: Purge
+    description: Delete events by ID, time range, or filters
+  - name: Health
+    description: Basic health checks
+
 paths:
-  /api/v1/register-device:
+  /v1/events:
     post:
-      summary: Device handshake for local agents
+      tags: [Events]
+      summary: Ingest an Event Envelope (metadata only)
+      description: |
+        Accepts a minimal Event Envelope (metadata only, no large blob content).
+        The daemon validates the envelope and enqueues it for processing.
+        Returns 202 Accepted on successful validation.
+      parameters:
+        - $ref: '#/components/parameters/LocalClientHeader'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterDeviceRequest'
-      responses:
-        '200':
-          description: Registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RegisterDeviceResponse'
-  /api/v1/events:
-    post:
-      summary: Ingest capture events
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Event'
+              $ref: '#/components/schemas/EventEnvelope'
+            example:
+              event_id: "550e8400-e29b-41d4-a716-446655440000"
+              timestamp: "2025-01-01T12:34:56Z"
+              source: "browser-extension"
+              app: "chrome"
+              content_pointer: "/var/vyasoai/blobs/abc123"
+              content_hash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+              size_bytes: 12345
+              tags: ["work", "doc"]
+              privacy_flag: "default"
       responses:
         '202':
-          description: Accepted
-  /api/v1/timeline:
+          description: Accepted and queued for async processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcceptedResponse'
+              example:
+                status: accepted
+                event_id: "550e8400-e29b-41d4-a716-446655440000"
+                queued: true
+        '400':
+          description: Invalid envelope (schema or value constraints)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 400
+                error: invalid_envelope
+                message: "content_hash must be a 64-char hex SHA256"
+        '404':
+          description: Resource not found (e.g., dependencies unavailable)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 404
+                error: not_found
+                message: "Endpoint or resource not found"
+
+  /v1/mem/{id}:
     get:
-      summary: Query timeline
+      tags: [Memory]
+      summary: Get stored memory metadata by event_id
+      description: |
+        Returns the full stored metadata for a given `event_id`.
+        The blob body is represented as a placeholder string in this version.
       parameters:
-        - in: query
-          name: start
+        - $ref: '#/components/parameters/LocalClientHeader'
+        - name: id
+          in: path
+          required: true
+          description: Event UUID
           schema:
             type: string
-            format: date-time
-        - in: query
-          name: end
-          schema:
-            type: string
-            format: date-time
-        - in: query
-          name: app
-          schema:
-            type: string
+            format: uuid
       responses:
         '200':
-          description: Timeline entries
+          description: Memory metadata found
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TimelineEntry'
-  /api/v1/memories/search:
-    post:
-      summary: Time-aware vector search
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SearchRequest'
-      responses:
-        '200':
-          description: Search results
+                $ref: '#/components/schemas/MemResponse'
+              example:
+                event_id: "550e8400-e29b-41d4-a716-446655440000"
+                envelope:
+                  event_id: "550e8400-e29b-41d4-a716-446655440000"
+                  timestamp: "2025-01-01T12:34:56Z"
+                  source: "browser-extension"
+                  app: "chrome"
+                  content_pointer: "/var/vyasoai/blobs/abc123"
+                  content_hash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+                  size_bytes: 12345
+                  tags: ["work", "doc"]
+                  privacy_flag: "default"
+                blob_body_placeholder: "<stored locally; not returned by this API>"
+        '404':
+          description: Memory not found for provided event_id
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SearchResponse'
-  /api/v1/privacy/purge:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 404
+                error: not_found
+                message: "No memory found for id 550e8400-e29b-41d4-a716-446655440000"
+        '400':
+          description: Invalid event_id format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 400
+                error: invalid_id
+                message: "id must be a valid UUID"
+
+  /v1/purge:
     post:
-      summary: Purge by app/time range
+      tags: [Purge]
+      summary: Purge events by IDs, time range, or filters
+      description: |
+        Accepts a JSON body requesting deletion by:
+        - `event_ids` (list of UUIDs), or
+        - `time_range` (from/to RFC3339), or
+        - `filter` (app/source/privacy_flag)
+        At least one criterion must be provided.
+      parameters:
+        - $ref: '#/components/parameters/LocalClientHeader'
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PurgeRequest'
+            example:
+              time_range:
+                from: "2025-01-01T00:00:00Z"
+                to: "2025-01-31T23:59:59Z"
+              filter:
+                app: "chrome"
+                source: "browser-extension"
       responses:
         '200':
-          description: Purge complete
+          description: Purge completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PurgeResponse'
+              example:
+                status: ok
+                deleted_count: 12
+                deleted_event_ids:
+                  - "550e8400-e29b-41d4-a716-446655440000"
+                  - "1b4e28ba-2fa1-11d2-883f-0016d3cca427"
+        '400':
+          description: Invalid purge request (no criteria or bad values)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 400
+                error: invalid_purge_request
+                message: "Provide event_ids, time_range, or filter"
+
+  /v1/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns {"status": "ok"} if the local daemon is healthy.
+      parameters:
+        - $ref: '#/components/parameters/LocalClientHeader'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: ok
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                code: 400
+                error: bad_request
+                message: "Malformed query"
+
 components:
+  securitySchemes:
+    localClientHeader:
+      type: apiKey
+      in: header
+      name: X-Vyaso-Local-Client
+      description: |
+        Local IPC trust signal from a known local application.
+        Accepts one of: "browser-extension", "vscode", "desktop-app".
+        Not a cloud token; optional and advisory.
+
+  parameters:
+    LocalClientHeader:
+      name: X-Vyaso-Local-Client
+      in: header
+      required: false
+      description: |
+        Optional header indicating a trusted local client type.
+        Values: "browser-extension" | "vscode" | "desktop-app".
+      schema:
+        type: string
+        enum: [browser-extension, vscode, desktop-app]
+
   schemas:
-    RegisterDeviceRequest:
+    EventEnvelope:
       type: object
+      description: Minimal metadata for a captured moment (no large blob content).
       properties:
-        device_id:
+        event_id:
           type: string
-        device_name:
-          type: string
-      required: [device_id]
-    RegisterDeviceResponse:
-      type: object
-      properties:
-        ok:
-          type: boolean
-        token:
-          type: string
-    Event:
-      type: object
-      properties:
-        id:
-          type: string
-        ts:
+          format: uuid
+        timestamp:
           type: string
           format: date-time
+          description: RFC3339 timestamp
+        source:
+          type: string
+          description: Origin of the event capture
+          enum: [browser-extension, vscode, system, manual]
         app:
           type: string
-        type:
+          description: Application name (e.g., chrome, vscode, slack)
+        content_pointer:
           type: string
-        blobs:
-          type: array
-          items:
-            type: string
-        meta:
-          type: object
-      required: [ts, app, type]
-    TimelineEntry:
-      type: object
-      properties:
-        id:
+          nullable: true
+          description: Path or pointer to blob stored locally; may be a null placeholder
+        content_hash:
           type: string
-        ts:
-          type: string
-          format: date-time
-        app:
-          type: string
-        title:
-          type: string
-        url:
-          type: string
+          description: sha256 hex string (64 lowercase hex chars)
+          pattern: "^[a-f0-9]{64}$"
+        size_bytes:
+          type: integer
+          format: int64
+          minimum: 0
         tags:
           type: array
           items:
             type: string
-    SearchRequest:
-      type: object
-      properties:
-        query:
+        privacy_flag:
           type: string
-        query_embedding:
-          type: array
-          items:
-            type: number
-        top_k:
-          type: integer
-          default: 5
-        filters:
-          type: object
-      oneOf:
-        - required: [query]
-        - required: [query_embedding]
-    SearchResponse:
+          enum: [default, sensitive, never_store]
+      required:
+        - event_id
+        - timestamp
+        - source
+        - app
+        - content_pointer
+        - content_hash
+        - size_bytes
+        - tags
+        - privacy_flag
+
+    AcceptedResponse:
       type: object
       properties:
-        results:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-              score:
-                type: number
-              snippet:
-                type: string
+        status:
+          type: string
+          example: accepted
+        event_id:
+          type: string
+          format: uuid
+        queued:
+          type: boolean
+          example: true
+      required: [status, event_id, queued]
+
+    MemResponse:
+      type: object
+      description: Stored memory metadata for a given event_id.
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        envelope:
+          $ref: '#/components/schemas/EventEnvelope'
+        blob_body_placeholder:
+          type: string
+          description: Placeholder string representing blob body (not returned)
+      required: [event_id, envelope, blob_body_placeholder]
+
     PurgeRequest:
       type: object
+      description: Request to delete events by IDs, time range, or filter criteria.
       properties:
-        app:
+        event_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        time_range:
+          type: object
+          properties:
+            from:
+              type: string
+              format: date-time
+              description: RFC3339 start time (inclusive)
+            to:
+              type: string
+              format: date-time
+              description: RFC3339 end time (inclusive)
+          required: [from, to]
+        filter:
+          type: object
+          properties:
+            app:
+              type: string
+            source:
+              type: string
+              enum: [browser-extension, vscode, system, manual]
+            privacy_flag:
+              type: string
+              enum: [default, sensitive, never_store]
+      anyOf:
+        - required: [event_ids]
+        - required: [time_range]
+        - required: [filter]
+      minProperties: 1
+
+    PurgeResponse:
+      type: object
+      properties:
+        status:
           type: string
-        start:
+          example: ok
+        deleted_count:
+          type: integer
+          minimum: 0
+        deleted_event_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required: [status, deleted_count]
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
           type: string
-          format: date-time
-        end:
+          example: ok
+      required: [status]
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        error:
           type: string
-          format: date-time
+          example: invalid_request
+        message:
+          type: string
+          example: Human-readable error message
+      required: [code, error, message]

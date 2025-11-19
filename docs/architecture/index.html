@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vyaso AI — How It Works (Simple View)</title>
+    <style>
+      :root {
+        --bg: #0f172a; /* slate-900 */
+        --card: #111827; /* gray-900 */
+        --text: #e5e7eb; /* gray-200 */
+        --muted: #9ca3af; /* gray-400 */
+        --accent: #38bdf8; /* sky-400 */
+        --accent-2: #22c55e; /* green-500 */
+        --accent-3: #f59e0b; /* amber-500 */
+        --border: #1f2937; /* gray-800 */
+      }
+      html, body { height: 100%; }
+      body {
+        margin: 0; background: var(--bg); color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      }
+      .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px; }
+      h1 { font-weight: 700; letter-spacing: 0.2px; margin: 0 0 8px; }
+      .subtitle { color: var(--muted); margin-bottom: 24px; }
+      .diagram {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 22px;
+        align-items: start;
+      }
+      .card {
+        background: linear-gradient(180deg, var(--card), #0b1220 55%);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px 16px 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      }
+      .card h2 { margin: 0 0 8px; font-size: 18px; }
+      .card p { margin: 0 0 10px; color: var(--muted); line-height: 1.45; }
+      .pill { display: inline-block; padding: 6px 10px; border-radius: 999px; font-size: 12px; margin: 6px 6px 0 0; border: 1px solid var(--border); color: var(--text); }
+      .accent { border-color: #0ea5e9; background: rgba(56,189,248,0.12); }
+      .accent2 { border-color: #16a34a; background: rgba(34,197,94,0.12); }
+      .accent3 { border-color: #d97706; background: rgba(245,158,11,0.12); }
+      .center { grid-column: 2; }
+      .left { grid-column: 1; }
+      .right { grid-column: 3; }
+      .full { grid-column: 1 / -1; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .arrow { margin: 8px 0 0; color: var(--muted); font-size: 14px; }
+      .flow { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 6px; }
+      .flow .step { background: rgba(56,189,248,0.08); border: 1px dashed #0ea5e9; border-radius: 10px; padding: 10px; }
+      .footer-note { color: var(--muted); font-size: 13px; margin-top: 10px; }
+      .emoji { font-size: 20px; margin-right: 6px; }
+      /* Extra layout helpers for detailed sections */
+      .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+      .muted { color: var(--muted); }
+      .tag { display: inline-block; margin: 6px 6px 0 0; padding: 6px 10px; border-radius: 8px; font-size: 12px; border: 1px solid var(--border); background: rgba(255,255,255,0.03); }
+      .badge { display: inline-block; margin: 4px 6px 0 0; padding: 4px 8px; border-radius: 6px; font-size: 12px; border: 1px dashed var(--border); color: var(--muted); }
+      /* SVG diagram styling */
+      .svg-diagram { width: 100%; height: auto; background: transparent; }
+      .svg-node { fill: var(--card); stroke: var(--border); stroke-width: 2; rx: 12; }
+      .svg-node-accent { fill: rgba(56,189,248,0.10); stroke: #0ea5e9; }
+      .svg-node-accent2 { fill: rgba(34,197,94,0.10); stroke: #16a34a; }
+      .svg-node-accent3 { fill: rgba(245,158,11,0.10); stroke: #d97706; }
+      .svg-text { fill: var(--text); font-size: 14px; font-weight: 600; }
+      .svg-subtext { fill: var(--muted); font-size: 12px; }
+      .svg-arrow { stroke: #0ea5e9; stroke-width: 2; marker-end: url(#arrowhead); }
+      .svg-arrow-muted { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 4 4; marker-end: url(#arrowhead-muted); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>Vyaso AI — How It Works</h1>
+      <div class="subtitle">A simple, visual walkthrough of how Vyaso AI keeps your information local, private, and useful.</div>
+
+      <div class="diagram">
+        <!-- Left: Connectors -->
+        <div class="card left">
+          <h2><span class="emoji">🧩</span> Connectors</h2>
+          <p>Small helpers that notice moments while you work (like visiting a page, opening a file, or writing code).</p>
+          <div class="row">
+            <div>
+              <div class="pill accent">Browser Extension</div>
+              <div class="arrow">captures browsing moments →</div>
+            </div>
+            <div>
+              <div class="pill accent">VS Code Helper</div>
+              <div class="arrow">captures coding moments →</div>
+            </div>
+          </div>
+          <p class="footer-note">Connectors only talk to your own computer. Nothing goes to the internet.</p>
+        </div>
+
+        <!-- Center: Local Agent / Daemon -->
+        <div class="card center">
+          <h2><span class="emoji">🏠</span> Local Agent</h2>
+          <p>The heart of Vyaso AI on your device. It listens, organizes, and prepares your moments for later use.</p>
+          <div class="pill accent2">Private local link</div>
+          <div class="pill accent2">Quick health check</div>
+          <div class="pill accent2">Inbox & queue</div>
+          <div class="arrow">← receives tiny “event envelopes” from connectors</div>
+          <div class="arrow">→ makes them searchable and helpful for your apps</div>
+        </div>
+
+        <!-- Right: Your Apps -->
+        <div class="card right">
+          <h2><span class="emoji">📱</span> Your Apps</h2>
+          <p>Friendly views that let you find moments, recall context, and stitch together your day.</p>
+          <div class="pill accent3">Timeline & search</div>
+          <div class="pill accent3">Notes & recall</div>
+          <div class="pill accent3">Assistant chats</div>
+          <p class="footer-note">Apps read from your local agent. Your information stays on your device.</p>
+        </div>
+
+        <!-- Bottom: What actually happens (plain flow) -->
+        <div class="card full">
+          <h2><span class="emoji">🧭</span> A Moment’s Journey</h2>
+          <div class="flow">
+            <div class="step">
+              <strong>1) Notice</strong>
+              <div>Connector spots a useful moment (e.g., “reading a guide”, “editing a file”).</div>
+            </div>
+            <div class="step">
+              <strong>2) Envelope</strong>
+              <div>A small note is created: when it happened, where, and simple tags. No heavy content.</div>
+            </div>
+            <div class="step">
+              <strong>3) Local Inbox</strong>
+              <div>Agent receives the note and puts it into a tidy queue, ready for organizing.</div>
+            </div>
+          </div>
+          <div class="flow" style="margin-top: 10px;">
+            <div class="step">
+              <strong>4) Organize</strong>
+              <div>Moments are grouped by time, app, and topic to build your personal timeline.</div>
+            </div>
+            <div class="step">
+              <strong>5) Find</strong>
+              <div>Search by tags and time to quickly recall what you were doing and where.</div>
+            </div>
+            <div class="step">
+              <strong>6) Help</strong>
+              <div>Your assistant uses these moments to give context-aware, fast, and private help.</div>
+            </div>
+          </div>
+          <p class="footer-note">Privacy-first design: your data doesn’t leave your computer unless you say so.</p>
+        </div>
+
+        <!-- Bottom: Principles -->
+        <div class="card full">
+          <h2><span class="emoji">🔒</span> Principles</h2>
+          <ul>
+            <li><strong>Local-first:</strong> Everything lives and runs on your device.</li>
+            <li><strong>Minimal sharing:</strong> Connectors send only small notes, not raw content.</li>
+            <li><strong>Control:</strong> You decide what’s stored, searched, or removed.</li>
+            <li><strong>Speed:</strong> Health checks and queues keep things snappy and reliable.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="footer-note">Tip: This is a simplified view. As features grow, more boxes appear — but privacy stays the same.</p>
+
+      <!-- High-Level Design (HLD) -->
+      <div class="card full">
+        <h2><span class="emoji">🧱</span> High‑Level Design (HLD)</h2>
+        <p class="muted">A founder‑friendly overview of core pieces and how they fit together.</p>
+        <div class="grid-3" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Connectors</h2>
+            <p>Lightweight observers that notice useful moments across tools you already use.</p>
+            <div class="pill accent">Browser</div>
+            <div class="pill accent">VS Code</div>
+            <div class="pill accent">System Hooks</div>
+            <p class="footer-note">Send small “event envelopes” only. No heavy content; privacy first.</p>
+          </div>
+          <div class="card">
+            <h2>Local Agent</h2>
+            <p>The private runtime on your device that receives, queues, and organizes moments.</p>
+            <div class="pill accent2">Private IPC</div>
+            <div class="pill accent2">Health Check</div>
+            <div class="pill accent2">Inbox & Queue</div>
+            <p class="footer-note">Runs locally with strict isolation; fast and reliable.</p>
+          </div>
+          <div class="card">
+            <h2>Your Apps</h2>
+            <p>Friendly interfaces for search, recall, and assistance built on your local timeline.</p>
+            <div class="pill accent3">Timeline</div>
+            <div class="pill accent3">Search & Tags</div>
+            <div class="pill accent3">Assistant</div>
+            <p class="footer-note">Read‑only by default; you stay in control of sharing.</p>
+          </div>
+        </div>
+        <div class="flow" style="margin-top: 12px;">
+          <div class="step"><strong>Data Path</strong><div>Connector → Event Envelope → Local Inbox → Organized Timeline → App Read</div></div>
+          <div class="step"><strong>Privacy Bar</strong><div>Only minimal metadata flows; content stays local unless explicitly shared.</div></div>
+          <div class="step"><strong>Reliability</strong><div>Health checks, queues, and back‑pressure keep capture stable and fast.</div></div>
+        </div>
+      </div>
+
+      <!-- Low-Level Design (LLD) -->
+      <div class="card full">
+        <h2><span class="emoji">🔍</span> Low‑Level Design (LLD)</h2>
+        <p class="muted">Key mechanics under the hood (kept non‑technical and clear).</p>
+        <div class="grid-2" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Runtime & Private Link</h2>
+            <ul>
+              <li>Runs on your device; no external servers required.</li>
+              <li>Uses a private local link (loopback or Unix socket) for messaging.</li>
+              <li>Health endpoint lets tools quickly check “is the agent ready?”.</li>
+            </ul>
+            <div class="badge">Startup: create link → serve → log health</div>
+          </div>
+          <div class="card">
+            <h2>Event Envelope (Contract)</h2>
+            <ul>
+              <li>Minimal fields: when, where, simple tags, and a tiny description.</li>
+              <li>No raw content by default; pointers only if you opt‑in.</li>
+              <li>Validated at intake to keep data tidy and searchable.</li>
+            </ul>
+            <div class="badge">Policy: small by design; easy to delete</div>
+          </div>
+          <div class="card">
+            <h2>Inbox & Queue</h2>
+            <ul>
+              <li>Every envelope lands in a local inbox first; nothing is lost.</li>
+              <li>Queued processing organizes moments into your timeline.</li>
+              <li>Back‑pressure avoids overload when many events arrive together.</li>
+            </ul>
+            <div class="badge">Reliability: retries, metrics, guardrails</div>
+          </div>
+          <div class="card">
+            <h2>Searchable Timeline</h2>
+            <ul>
+              <li>Organized by time, app, and tags so recall is fast and natural.</li>
+              <li>Index keeps things snappy even with a lot of moments.</li>
+              <li>Optional content pointers if you allow deeper recall.</li>
+            </ul>
+            <div class="badge">Control: remove, re‑tag, or opt‑out any time</div>
+          </div>
+          <div class="card">
+            <h2>Observability</h2>
+            <ul>
+              <li>Human‑readable logs for startup, health, and intake.</li>
+              <li>Simple counters for envelopes received and processed.</li>
+              <li>Helpful diagnostics without exposing private content.</li>
+            </ul>
+            <div class="badge">Transparency: see what’s happening, locally</div>
+          </div>
+          <div class="card">
+            <h2>Security & Privacy</h2>
+            <ul>
+              <li>Local‑only messaging; no public network exposure.</li>
+              <li>Principle: smallest possible data; content stays with you.</li>
+              <li>Explicit sharing only; default is private and offline.</li>
+            </ul>
+            <div class="badge">Default: private, local, minimal</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tech Stack & Usage -->
+      <div class="card full">
+        <h2><span class="emoji">🧰</span> Tech Stack & How We Use It</h2>
+        <div class="grid-3" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Core Runtime</h2>
+            <p>Fast, reliable local agent with a simple private API.</p>
+            <div class="tag">Rust</div>
+            <div class="tag">Axum</div>
+            <div class="tag">Tokio</div>
+            <p class="footer-note">Why: performance, safety, and strong ecosystem for local apps.</p>
+          </div>
+          <div class="card">
+            <h2>Connectors</h2>
+            <p>Lightweight helpers for browsers and code editors.</p>
+            <div class="tag">TypeScript / JavaScript</div>
+            <div class="tag">Browser Extension APIs</div>
+            <div class="tag">VS Code Extension API</div>
+            <p class="footer-note">Why: quick iteration and easy distribution to users.</p>
+          </div>
+          <div class="card">
+            <h2>Assistant & Apps</h2>
+            <p>Local UI for timeline, recall, and context‑aware assistance.</p>
+            <div class="tag">Web UI</div>
+            <div class="tag">Local‑first storage</div>
+            <div class="tag">Privacy controls</div>
+            <p class="footer-note">Why: approachable design with clear privacy guardrails.</p>
+          </div>
+        </div>
+        <p class="footer-note">Principle: choose technology that keeps things fast, simple, and local.</p>
+      </div>
+
+      <!-- Current Structures & Planning -->
+      <div class="card full">
+        <h2><span class="emoji">🗺️</span> Current Structures & Planning</h2>
+        <div class="grid-2" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Today</h2>
+            <ul>
+              <li>Local agent runs with health checks and event intake.</li>
+              <li>Event envelopes are validated and enqueued for processing.</li>
+              <li>Docs include this visual architecture for founder review.</li>
+            </ul>
+            <div class="badge">Focus: reliable intake & private runtime</div>
+          </div>
+          <div class="card">
+            <h2>Next 2–4 Weeks</h2>
+            <ul>
+              <li>Ship early connectors (browser + VS Code) capturing key moments.</li>
+              <li>Expose simple local UI for timeline and search (read‑only).</li>
+              <li>Harden queue, back‑pressure, and diagnostics for scale.</li>
+            </ul>
+            <div class="badge">Milestone: private capture → useful recall</div>
+          </div>
+        </div>
+        <div class="grid-2" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Risks</h2>
+            <ul>
+              <li>Over‑collection harming trust → keep envelopes minimal and transparent.</li>
+              <li>Connector complexity → start small, iterate with visible settings.</li>
+              <li>Performance on older hardware → prefer lightweight, local operations.</li>
+            </ul>
+            <div class="badge">Mitigation: privacy guardrails, staged rollout, metrics</div>
+          </div>
+          <div class="card">
+            <h2>Success Signals</h2>
+            <ul>
+              <li>Moments captured without friction; users feel in control.</li>
+              <li>Fast recall of “what was I doing?” within seconds.</li>
+              <li>Stable agent runtime with clear, friendly diagnostics.</li>
+            </ul>
+            <div class="badge">Outcome: trust + speed + usefulness</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Stories & Acceptance -->
+      <div class="card full">
+        <h2><span class="emoji">🧒</span> User Stories (Founder‑Friendly)</h2>
+        <div class="grid-2" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Recall & Search</h2>
+            <ul>
+              <li>As a researcher, I can find “what I read last week” by topic.</li>
+              <li>Acceptance: search returns relevant moments within 2 seconds.</li>
+              <li>Privacy: only minimal metadata is indexed by default.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h2>Coding Context</h2>
+            <ul>
+              <li>As a developer, I can recall which files I edited for a task.</li>
+              <li>Acceptance: timeline groups edits by repo and time window.</li>
+              <li>Privacy: no source code stored unless I opt‑in.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h2>Reading Trail</h2>
+            <ul>
+              <li>As a learner, I see a trail of pages I studied for a topic.</li>
+              <li>Acceptance: pages are grouped and tagged by simple rules.</li>
+              <li>Privacy: only page titles/URLs unless deeper capture allowed.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h2>Assistant Help</h2>
+            <ul>
+              <li>As a teammate, the assistant uses my timeline for context.</li>
+              <li>Acceptance: helper explains “why” with references to moments.</li>
+              <li>Privacy: always local; explicit consent to share externally.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Founder Guide: Responsibilities & Decisions -->
+      <div class="card full">
+        <h2><span class="emoji">🧭</span> Founder Guide — Responsibilities & Decisions</h2>
+        <div class="grid-2" style="margin-top: 8px;">
+          <div class="card">
+            <h2>Product & Privacy</h2>
+            <ul>
+              <li>Define the privacy bar: minimal by default, opt‑in for more.</li>
+              <li>Choose connector rollout order and visible settings.</li>
+              <li>Approve acceptance criteria for recall, speed, and diagnostics.</li>
+            </ul>
+            <div class="badge">Guardrails: clarity, consent, control</div>
+          </div>
+          <div class="card">
+            <h2>Execution & Quality</h2>
+            <ul>
+              <li>Gate releases on stability and trust (founder sign‑off).</li>
+              <li>Set a weekly review rhythm with demoable outcomes.</li>
+              <li>Track success signals and adjust priorities accordingly.</li>
+            </ul>
+            <div class="badge">Cadence: weekly demos, clear outcomes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Roadmap & Milestones -->
+      <div class="card full">
+        <h2><span class="emoji">🗓️</span> Roadmap & Milestones</h2>
+        <ul>
+          <li><strong>M1:</strong> Private runtime with health + event intake.</li>
+          <li><strong>M2:</strong> Browser + VS Code connectors (minimal envelopes).</li>
+          <li><strong>M3:</strong> Timeline & search UI (read‑only, local‑first).</li>
+          <li><strong>M4:</strong> Assistant using local timeline for context.</li>
+          <li><strong>M5:</strong> User controls for sharing, deletion, and opt‑ins.</li>
+          <li><strong>M6:</strong> Packaging, onboarding, and friendly diagnostics.</li>
+        </ul>
+        <p class="footer-note">Everything ships behind privacy guardrails. Local‑first remains our north star.</p>
+      </div>
+
+      <!-- Visual: System Overview Diagram -->
+      <div class="card full">
+        <h2><span class="emoji">🖼️</span> System Overview (Visual)</h2>
+        <p class="muted">A simple picture: connectors send tiny notes to your local agent; your apps read privately.</p>
+        <svg class="svg-diagram" viewBox="0 0 900 300" role="img" aria-label="System overview diagram with connectors, local agent, and apps">
+          <defs>
+            <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#0ea5e9"></path>
+            </marker>
+            <marker id="arrowhead-muted" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#9ca3af"></path>
+            </marker>
+          </defs>
+
+          <!-- Connectors -->
+          <rect x="30" y="60" width="220" height="90" class="svg-node svg-node-accent"></rect>
+          <text x="140" y="85" text-anchor="middle" class="svg-text">Connectors</text>
+          <text x="140" y="110" text-anchor="middle" class="svg-subtext">Browser • VS Code • System</text>
+
+          <!-- Local Agent -->
+          <rect x="340" y="60" width="220" height="90" class="svg-node svg-node-accent2"></rect>
+          <text x="450" y="85" text-anchor="middle" class="svg-text">Local Agent</text>
+          <text x="450" y="110" text-anchor="middle" class="svg-subtext">Inbox • Queue • Health</text>
+
+          <!-- Apps -->
+          <rect x="650" y="60" width="220" height="90" class="svg-node svg-node-accent3"></rect>
+          <text x="760" y="85" text-anchor="middle" class="svg-text">Your Apps</text>
+          <text x="760" y="110" text-anchor="middle" class="svg-subtext">Timeline • Search • Assistant</text>
+
+          <!-- Arrows -->
+          <line x1="250" y1="105" x2="340" y2="105" class="svg-arrow"></line>
+          <line x1="560" y1="105" x2="650" y2="105" class="svg-arrow"></line>
+
+          <!-- Privacy Bar (dashed) -->
+          <line x1="40" y1="180" x2="860" y2="180" class="svg-arrow-muted"></line>
+          <text x="450" y="200" text-anchor="middle" class="svg-subtext">Privacy Bar: minimal metadata flows; content stays local</text>
+        </svg>
+      </div>
+
+      <!-- Visual: Data Flow Pipeline -->
+      <div class="card full">
+        <h2><span class="emoji">🧪</span> Data Flow (Pipeline)</h2>
+        <p class="muted">From “noticed moment” to “useful recall” — kept small and local.</p>
+        <svg class="svg-diagram" viewBox="0 0 900 220" role="img" aria-label="Data flow pipeline from connectors to apps via envelopes, inbox, queue, and timeline">
+          <defs>
+            <marker id="arrowhead2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#0ea5e9"></path>
+            </marker>
+          </defs>
+
+          <!-- Steps -->
+          <rect x="20" y="60" width="130" height="70" class="svg-node svg-node-accent"></rect>
+          <text x="85" y="85" text-anchor="middle" class="svg-text">Notice</text>
+          <text x="85" y="105" text-anchor="middle" class="svg-subtext">connector sees moment</text>
+
+          <rect x="170" y="60" width="130" height="70" class="svg-node svg-node-accent"></rect>
+          <text x="235" y="85" text-anchor="middle" class="svg-text">Envelope</text>
+          <text x="235" y="105" text-anchor="middle" class="svg-subtext">tiny note (when/where)</text>
+
+          <rect x="320" y="60" width="130" height="70" class="svg-node svg-node-accent2"></rect>
+          <text x="385" y="85" text-anchor="middle" class="svg-text">Inbox</text>
+          <text x="385" y="105" text-anchor="middle" class="svg-subtext">local intake</text>
+
+          <rect x="470" y="60" width="130" height="70" class="svg-node svg-node-accent2"></rect>
+          <text x="535" y="85" text-anchor="middle" class="svg-text">Queue</text>
+          <text x="535" y="105" text-anchor="middle" class="svg-subtext">organized processing</text>
+
+          <rect x="620" y="60" width="130" height="70" class="svg-node svg-node-accent3"></rect>
+          <text x="685" y="85" text-anchor="middle" class="svg-text">Timeline</text>
+          <text x="685" y="105" text-anchor="middle" class="svg-subtext">searchable moments</text>
+
+          <rect x="770" y="60" width="110" height="70" class="svg-node svg-node-accent3"></rect>
+          <text x="825" y="85" text-anchor="middle" class="svg-text">Apps</text>
+          <text x="825" y="105" text-anchor="middle" class="svg-subtext">read & recall</text>
+
+          <!-- Arrows -->
+          <line x1="150" y1="95" x2="170" y2="95" class="svg-arrow" marker-end="url(#arrowhead2)"></line>
+          <line x1="300" y1="95" x2="320" y2="95" class="svg-arrow" marker-end="url(#arrowhead2)"></line>
+          <line x1="450" y1="95" x2="470" y2="95" class="svg-arrow" marker-end="url(#arrowhead2)"></line>
+          <line x1="600" y1="95" x2="620" y2="95" class="svg-arrow" marker-end="url(#arrowhead2)"></line>
+          <line x1="750" y1="95" x2="770" y2="95" class="svg-arrow" marker-end="url(#arrowhead2)"></line>
+        </svg>
+      </div>
+
+      <!-- Visual: User Journey Flowchart -->
+      <div class="card full">
+        <h2><span class="emoji">🧭</span> User Journey (Flowchart)</h2>
+        <p class="muted">What a typical day looks like with Vyaso AI, from capture to assistance.</p>
+        <svg class="svg-diagram" viewBox="0 0 900 260" role="img" aria-label="User journey flowchart from capture to recall and assistant help">
+          <defs>
+            <marker id="arrowhead3" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="#16a34a"></path>
+            </marker>
+          </defs>
+
+          <!-- Row 1 -->
+          <rect x="60" y="40" width="190" height="70" class="svg-node svg-node-accent"></rect>
+          <text x="155" y="65" text-anchor="middle" class="svg-text">Capture Moments</text>
+          <text x="155" y="85" text-anchor="middle" class="svg-subtext">browser • code • notes</text>
+
+          <rect x="350" y="40" width="190" height="70" class="svg-node svg-node-accent2"></rect>
+          <text x="445" y="65" text-anchor="middle" class="svg-text">Local Inbox</text>
+          <text x="445" y="85" text-anchor="middle" class="svg-subtext">queued & validated</text>
+
+          <rect x="640" y="40" width="190" height="70" class="svg-node svg-node-accent2"></rect>
+          <text x="735" y="65" text-anchor="middle" class="svg-text">Organize</text>
+          <text x="735" y="85" text-anchor="middle" class="svg-subtext">timeline & tags</text>
+
+          <line x1="250" y1="75" x2="350" y2="75" class="svg-arrow" marker-end="url(#arrowhead3)"></line>
+          <line x1="540" y1="75" x2="640" y2="75" class="svg-arrow" marker-end="url(#arrowhead3)"></line>
+
+          <!-- Row 2 -->
+          <rect x="200" y="150" width="190" height="70" class="svg-node svg-node-accent3"></rect>
+          <text x="295" y="175" text-anchor="middle" class="svg-text">Recall & Search</text>
+          <text x="295" y="195" text-anchor="middle" class="svg-subtext">find past moments</text>
+
+          <rect x="500" y="150" width="190" height="70" class="svg-node svg-node-accent3"></rect>
+          <text x="595" y="175" text-anchor="middle" class="svg-text">Assistant Help</text>
+          <text x="595" y="195" text-anchor="middle" class="svg-subtext">context‑aware</text>
+
+          <line x1="390" y1="185" x2="500" y2="185" class="svg-arrow" marker-end="url(#arrowhead3)"></line>
+        </svg>
+      </div>
+    </div>
+  </body>
+</html>

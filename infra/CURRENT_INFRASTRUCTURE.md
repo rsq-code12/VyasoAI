@@ -56,10 +56,14 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
    - Verification script: `tools/verify-toolchain.sh`.
 
 ## Networking & Services (Current)
-- No running network services yet.
-- Planned: local HTTP/JSONRPC served by `daemon` on `127.0.0.1`, with connectors posting events and app fetching timeline/search.
- - API contract: OpenAPI spec at `infra/api/openapi.yaml` is the authoritative source.
- - Port (draft): `127.0.0.1:8765` for local HTTP; Unix socket alternative planned.
+- Local daemon now serves a minimal API:
+  - macOS/Linux: Unix Domain Socket (UDS)
+    - macOS: `~/Library/Application Support/VyasoAI/vyasoai.sock`
+    - Linux: `$XDG_RUNTIME_DIR/vyasoai.sock` (fallback `/tmp/vyasoai.sock`)
+  - Windows: loopback HTTP `127.0.0.1:8765`
+- Endpoints implemented: `GET /v1/health`, `POST /v1/events` (202 Accepted)
+- Connectors should prefer UDS where available; HTTP is loopback-only.
+- API contract: OpenAPI spec at `infra/api/openapi.yaml` is the authoritative source.
 
 ## Storage & Index (Planned)
 - Timeline metadata: SQLite.
@@ -82,12 +86,14 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
 - Planned: local logs, basic metrics, and privacy-preserving telemetry with opt-in.
 
 ## Ports & Endpoints (Draft)
-- Ports: None in use.
-- Draft endpoints (once `daemon` exposes HTTP):
-  - `POST /api/v1/events` — ingest capture events.
-  - `GET /api/v1/timeline` — query timeline by time/app filters.
-  - `GET /api/v1/memories/search` — time-aware vector search.
-  - `POST /api/v1/privacy/purge` — delete by app/time range.
+- Ports: Loopback `127.0.0.1:8765` used on Windows; UDS used on macOS/Linux.
+- Current endpoints:
+  - `GET /v1/health` — daemon health.
+  - `POST /v1/events` — ingest event envelopes (metadata only).
+- Future endpoints:
+  - `GET /v1/timeline` — query timeline by time/app filters.
+  - `POST /v1/memories/search` — time-aware vector search.
+  - `POST /v1/privacy/purge` — delete by app/time range.
 
 ## Governance & Single-Project Rule
 - Single monorepo governs agents, connectors, app, infra.
@@ -95,4 +101,4 @@ This document describes the current (skeleton) infrastructure of the Vyaso AI mo
 
 ## Status
 - This is a living document. Update as services, endpoints, and packaging evolve.
- - Recent updates: CI split into per-language jobs with caching; toolchain pinning and verification added (now fails on mismatch); OpenAPI spec authored at `infra/api/openapi.yaml`; security and storage docs linked; Python test discovery fixed to `test_*.py`; Node packages set `type: "module"`; CI caches now fallback when lockfiles are missing (Cargo.toml/go.mod).
+ - Recent updates: CI split into per-language jobs with caching; toolchain pinning and verification added (now fails on mismatch); OpenAPI spec updated for `/v1/health` and `/v1/events`; security and storage docs linked; Python test discovery fixed to `test_*.py`; Node packages set `type: "module"`; CI caches now fallback when lockfiles are missing (Cargo.toml/go.mod); daemon skeleton with UDS (macOS/Linux) and loopback HTTP (Windows), async queue, health test.
